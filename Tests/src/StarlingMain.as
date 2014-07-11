@@ -23,6 +23,8 @@ package
 			_macawSlider.addItemFromUrl('http://ichef.bbci.co.uk/wwfeatures/624_351/images/live/p0/1p/5y/p01p5ygs.jpg');
 			_macawSlider.addItemFromUrl('http://wpmedia.o.canada.com/2014/04/528968726.jpg');
 			_macawSlider.addItemFromUrl('http://www.eyeopening.info/wp-content/uploads/2014/02/powerful-photos-13.jpg');
+			_macawSlider.isVerticalSlider = false;
+			_macawSlider.wrapSlider = true;
 			
 			this.addChild(_macawSlider);
 			_macawSlider.initialize();

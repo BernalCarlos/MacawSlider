@@ -55,10 +55,6 @@ package starling.extensions.macawslider
 		/** La cantidad de items en el slider **/
 		private var _itemsLength: uint;
 		
-		/** La posicion en X de la siguiente foto **/
-		private var _nextX: Number;
-		/** La posicion en Y de la siguiente foto **/
-		private var _nextY: Number;
 		/** Indice de la photo actualmente mostrada **/
 		private var _currentSelectedItem: int;
 		/** Indice de la photo anteriormente selecionada **/
@@ -82,6 +78,8 @@ package starling.extensions.macawslider
 		private var _autoScrollTime: Number = 5;
 		/** Tiempo (en segundos) que demora la animacion del el slider en pasar de un item a otro **/
 		private var _scrollSpeedTime: Number = 0.5;
+		/** Determina si el slider se encuentra realizando una transición **/
+		private var _isInItemTransition: Boolean = false;;
 		
 		/** Timer que controla el scroll automatico del slider **/
 		private var _autoScrollTimer: Timer;
@@ -181,10 +179,11 @@ package starling.extensions.macawslider
 			_sliderWidth = $width;
 			_sliderHeight = $height;
 			_items = new Vector.<MacawSliderItem>();
-			_nextX = 0;
-			_nextY = 0;
 			_previousSelectedItem = 0;
 			_currentSelectedItem = 0;
+			_itemsLength = 0;
+			_userMovedTheSlider = false;
+			_isInItemTransition = false;
 			_slidesContainer = new Sprite();
 			
 			_isVerticalSlider = $isVerticalSlider;
@@ -236,20 +235,22 @@ package starling.extensions.macawslider
 				}
 			}
 			
-			//Agregar el item
+			//Crear el item
 			_tempItem = MacawSliderItem.fromSprite($sprite, $data);
-			_slidesContainer.addChild(_tempItem);
-			
 			_tempItem.width = _sliderWidth;
 			_tempItem.height = _sliderHeight;
-			if(!_isVerticalSlider){
-				_tempItem.x = _nextX;
-				_nextX += _sliderWidth;
-			}else{
-				_tempItem.y = _nextY;
-				_nextY += _sliderHeight;
+			
+			//Only add the item to the slides container if it is the first one
+			if(_itemsLength <= 0){
+				_slidesContainer.addChild(_tempItem);
+				if(!_isVerticalSlider){
+					_tempItem.x = 0;
+				}else{
+					_tempItem.y = 0;
+				}
 			}
-
+			
+			//Add the item to the items vector
 			_items.push(_tempItem);
 			_itemsLength++;
 			
@@ -278,21 +279,22 @@ package starling.extensions.macawslider
 				}
 			}
 			
-			//Agregar el item
+			//Crear el item
 			_tempItem = MacawSliderItem.fromBitmap($bitmap, $data);
-			
 			_tempItem.width = _sliderWidth;
 			_tempItem.height = _sliderHeight;
-			if(!_isVerticalSlider){
-				_tempItem.x = _nextX;
-				_nextX += _sliderWidth;
-			}else{
-				_tempItem.y = _nextY;
-				_nextY += _sliderHeight;
+			
+			//Only add the item to the slides container if it is the first one
+			if(_itemsLength <= 0){
+				_slidesContainer.addChild(_tempItem);
+				if(!_isVerticalSlider){
+					_tempItem.x = 0;
+				}else{
+					_tempItem.y = 0;
+				}
 			}
 			
-			_slidesContainer.addChild(_tempItem);
-			
+			//Add the item to the items vector
 			_items.push(_tempItem);
 			_itemsLength++;
 
@@ -321,19 +323,20 @@ package starling.extensions.macawslider
 				}
 			}
 			
-			//Agregar el item
+			//Crear el item
 			_tempItem = MacawSliderItem.fromUrl($url, _sliderWidth, _sliderHeight, _loadingMovieclipTextures, _loadingAnimationFps, $autoLoad, $data);
 
-			if(!_isVerticalSlider){
-				_tempItem.x = _nextX;
-				_nextX += _sliderWidth;
-			}else{
-				_tempItem.y = _nextY;
-				_nextY += _sliderHeight;
+			//Only add the item to the slides container if it is the first one
+			if(_itemsLength <= 0){
+				_slidesContainer.addChild(_tempItem);
+				if(!_isVerticalSlider){
+					_tempItem.x = 0;
+				}else{
+					_tempItem.y = 0;
+				}
 			}
 			
-			_slidesContainer.addChild(_tempItem);
-			
+			//Add the item to the items vector
 			_items.push(_tempItem);
 			_itemsLength++;
 
@@ -372,7 +375,7 @@ package starling.extensions.macawslider
 			}
 			
 			//Agregar el indicador de bullets
-			if(_usePageIndicator){
+			if(_usePageIndicator && _normalPageIndicator != null && _selectedPageIndicator != null){
 				_itemsIndicator = new PageIndicator();
 				this.addChild(_itemsIndicator);
 				_itemsIndicator.validate();
@@ -440,6 +443,11 @@ package starling.extensions.macawslider
 		 * Muestra el slider.
 		 */
 		public function gotoItem($itemIndex: int): void{
+			
+			//Check there is a transition in motion
+			if(_isInItemTransition){
+				return;
+			}
 
 			_previousSelectedItem = _currentSelectedItem;
 			_currentSelectedItem = $itemIndex;
@@ -469,9 +477,21 @@ package starling.extensions.macawslider
 				_itemsIndicator.addEventListener(Event.CHANGE, onItemIndicatorSelected);
 			}
 			
+			//Flag _isInItemTransition
+			_isInItemTransition = true;
+			
 			//Determinar el valor de X
 			if(!_isVerticalSlider){
-				_gotoX = -(_currentSelectedItem * _sliderWidth);
+				if(_previousSelectedItem == _currentSelectedItem){
+					_gotoX = 0;
+				}else if(_previousSelectedItem == 0 && _currentSelectedItem == _itemsLength -1){
+					_gotoX = _sliderWidth;
+				}else if (_previousSelectedItem == _itemsLength -1 && _currentSelectedItem == 0){
+					_gotoX = _sliderWidth * -1;
+				}else{
+					_gotoX = _sliderWidth * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+				}
+				
 				Starling.juggler.tween(_slidesContainer, _scrollSpeedTime, {
 					x: _gotoX,
 					transition: Transitions.EASE_OUT,
@@ -480,7 +500,17 @@ package starling.extensions.macawslider
 				
 			}else{
 
-				_gotoY = -(_currentSelectedItem * _sliderHeight);
+				//Determinar el valor de Y
+				if(_previousSelectedItem == _currentSelectedItem){
+					_gotoY = 0;
+				}else if(_previousSelectedItem == 0 && _currentSelectedItem == _itemsLength -1){
+					_gotoY = _sliderHeight;
+				}else if (_previousSelectedItem == _itemsLength -1 && _currentSelectedItem == 0){
+					_gotoY = _sliderHeight * -1;
+				}else{
+					_gotoY = _sliderHeight * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+				}
+				
 				Starling.juggler.tween(_slidesContainer, _scrollSpeedTime, {
 					y: _gotoY,
 					transition: Transitions.EASE_OUT,
@@ -501,6 +531,13 @@ package starling.extensions.macawslider
 		 */
 		private function notifyItemSelection(): void{
 			if(_items != null){
+				//Reiniciar el contendor de slides
+				this.removeAdjacentItemsInSlidesContainer();
+				
+				//flag _isInItemTransition
+				_isInItemTransition = false;
+				
+				//notificar
 				this.dispatchEventWith(MacawSliderEvent.ITEM_SELECTED, false, {
 					item_index: _currentSelectedItem,
 					item: _items[_currentSelectedItem]
@@ -518,6 +555,11 @@ package starling.extensions.macawslider
 
 			if(_touch != null){
 				
+				//Add the Adjacent items to the slides container
+				if(_slidesContainer.numChildren <= 1){
+					this.addAdjacentItemsToSlidesContainer(_currentSelectedItem - 1, _currentSelectedItem + 1);
+				}
+				
 				if(!_isVerticalSlider){
 					if(_lastTouchX >= 0){
 	
@@ -525,16 +567,17 @@ package starling.extensions.macawslider
 						_touchDelta = _touch.globalX - _lastTouchX;
 						_slidesContainer.x += _touchDelta;
 						
-						//Verificar que no se salga de los limite
-						if(_slidesContainer.x > 0){
-							_slidesContainer.x = 0;
+						//Check is allowed to wrap the slides
+						if(!_wrapSlider){
+							if(_slidesContainer.x > 0 && _currentSelectedItem == 0){
+								_slidesContainer.x = 0;
+							}
+							if(_slidesContainer.x < 0 && _currentSelectedItem >= _itemsLength - 1){
+								_slidesContainer.x = 0;
+							}
 						}
 						
-						if(_slidesContainer.x < (_sliderWidth - _slidesContainer.width)){
-							_slidesContainer.x = -(_slidesContainer.width - _sliderWidth);
-						}
-						
-						//Verficar si la intencion del usaurio es mover ir al siguiente item del slider
+						//Verficar si la intencion del usaurio es ir al siguiente item del slider
 						_sliderMovementDelta += Math.abs(_touch.globalX - _lastTouchX);
 						if(_sliderMovementDelta > SLIDE_DELTA){
 							
@@ -562,16 +605,17 @@ package starling.extensions.macawslider
 						_touchDelta = _touch.globalY - _lastTouchY;
 						_slidesContainer.y += _touchDelta;
 						
-						//Verificar que no se salga de los limite
-						if(_slidesContainer.y > 0){
-							_slidesContainer.y = 0;
+						//Check is allowed to wrap the slides
+						if(!_wrapSlider){
+							if(_slidesContainer.y > 0 && _currentSelectedItem == 0){
+								_slidesContainer.y = 0;
+							}
+							if(_slidesContainer.y < 0 && _currentSelectedItem >= _itemsLength - 1){
+								_slidesContainer.y = 0;
+							}
 						}
 						
-						if(_slidesContainer.y < (_sliderHeight - _slidesContainer.height)){
-							_slidesContainer.y = -(_slidesContainer.height - _sliderHeight);
-						}
-						
-						//Verficar si la intencion del usaurio es mover ir al siguiente item del slider
+						//Verficar si la intencion del usaurio es ir al siguiente item del slider
 						_sliderMovementDelta += Math.abs(_touch.globalY - _lastTouchY);
 						if(_sliderMovementDelta > SLIDE_DELTA){
 							
@@ -597,7 +641,7 @@ package starling.extensions.macawslider
 			//Verificar si ya se solto el touch
 			_touch = evt.getTouch(this, TouchPhase.ENDED);
 			if(_touch != null){
-				
+
 				if(!_isVerticalSlider){
 					//Verificar si el usuario intento mover el slider
 					if(_userMovedTheSlider){
@@ -659,6 +703,67 @@ package starling.extensions.macawslider
 			}
 		}
 		
+		///////////////////////////////
+		//  Private helper functions
+		///////////////////////////////
+		
+		/**
+		 * Adds 2 items to the _slidesConatiner. One before the current selected item,
+		 * and one next to it.
+		 * 
+		 * @param $prevItemIndex The index of the item to be displayed before the current selected item.
+		 * @param $nexItemIndex The index of the item to be displayed next to the current selected item.
+		 */
+		private function addAdjacentItemsToSlidesContainer($prevItemIndex: int, $nexItemIndex: int): void{
+			
+			//Validate the input
+			if($prevItemIndex < 0){
+				$prevItemIndex = _itemsLength - 1;
+			}
+			if($nexItemIndex >= _itemsLength){
+				$nexItemIndex = 0;
+			}
+			
+			//Check if this is a veritial slider
+			if(!_isVerticalSlider){
+				
+				//Add the previous item
+				_items[$prevItemIndex].x = _items[_currentSelectedItem].x - _sliderWidth;
+				_slidesContainer.addChild(_items[$prevItemIndex]);
+				
+				//Add the next item
+				_items[$nexItemIndex].x = _items[_currentSelectedItem].x + _sliderWidth;
+				_slidesContainer.addChild(_items[$nexItemIndex]);
+			}else{
+				
+				//Add the previous item
+				_items[$prevItemIndex].y = _items[_currentSelectedItem].y - _sliderHeight;
+				_slidesContainer.addChild(_items[$prevItemIndex]);
+				
+				//Add the next item
+				_items[$nexItemIndex].y = _items[_currentSelectedItem].y + _sliderHeight;
+				_slidesContainer.addChild(_items[$nexItemIndex]);
+			}
+			
+		}
+		
+		/**
+		 * Remove the items adjacent to the current selected item.
+		 */
+		private function removeAdjacentItemsInSlidesContainer(): void{
+			//Remove all items from the container
+			_slidesContainer.removeChildren();
+			_slidesContainer.x = _slidesContainer.y = 0;
+			
+			//Add the current item
+			_items[_currentSelectedItem].x = _items[_currentSelectedItem].y = 0;
+			_slidesContainer.addChild(_items[_currentSelectedItem]);
+		}
+		
+		////////////////////////
+		//  Dispose Method
+		////////////////////////
+		
 		/**
 		 * Libera los recursos de este slider.
 		 */
@@ -680,7 +785,6 @@ package starling.extensions.macawslider
 			}
 			
 			_itemsLength = NaN;
-			_nextX = NaN;
 			_previousSelectedItem = NaN;
 			_currentSelectedItem = NaN;
 			 _lastTouchX = NaN;
@@ -764,7 +868,6 @@ package starling.extensions.macawslider
 			_pageIndicatorXOffset = NaN;
 			_pageIndicatorYOffset = NaN;
 			
-			_nextY = NaN;
 			_lastTouchY = NaN;
 			_gotoY = NaN;
 			
@@ -802,10 +905,12 @@ package starling.extensions.macawslider
 		{
 			_scrollSpeedTime = value;
 		}
-
+		
+		/** @inheritDoc **/
 		public override function get width():Number{
 			return _sliderWidth;
 		}
+		/** @inheritDoc **/
 		public override function get height():Number{
 			return _sliderHeight;
 		}
