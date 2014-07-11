@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>MacawSliderTest</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>com.adobe.flexbuilder.project.flexbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>[source path] GreenSock-AS3-src</name>
+			<type>2</type>
+			<location>C:/Users/Carlos/Documents/GitHub/GreenSock-AS3/src</location>
+		</link>
+		<link>
+			<name>[source path] MacawSlider-src</name>
+			<type>2</type>
+			<location>C:/Users/Carlos/Documents/GitHub/MacawSlider/MacawSlider/src</location>
+		</link>
+		<link>
+			<name>[source path] pixelmask-src</name>
+			<type>2</type>
+			<location>C:/Users/Carlos/Documents/GitHub/pixelmask/src</location>
+		</link>
+		<link>
+			<name>[source path] source</name>
+			<type>2</type>
+			<location>C:/Users/Carlos/Documents/GitHub/feathers/source</location>
+		</link>
+		<link>
+			<name>[source path] starling-src</name>
+			<type>2</type>
+			<location>C:/Users/Carlos/Documents/GitHub/Starling-Framework/starling/src</location>
+		</link>
+	</linkedResources>
+</projectDescription>
