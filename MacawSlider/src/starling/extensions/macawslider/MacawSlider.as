@@ -436,6 +436,12 @@ package starling.extensions.macawslider
 		 * Controla los tiempo de auto scroll.
 		 */
 		private function onAutoScrollTimer(evt: TimerEvent): void{
+			if(!_isVerticalSlider){
+				_slidesContainer.x = -0.1;
+			}else{
+				_slidesContainer.y = -0.1;
+			}
+			this.addAdjacentItemsToSlidesContainer(_currentSelectedItem - 1, _currentSelectedItem + 1);
 			this.gotoItem(_currentSelectedItem + 1);
 		}
 		
@@ -470,7 +476,7 @@ package starling.extensions.macawslider
 					return;
 				}
 			}
-			
+
 			if(_itemsIndicator != null){
 				_itemsIndicator.removeEventListeners()
 				_itemsIndicator.selectedIndex = _currentSelectedItem;
@@ -479,17 +485,29 @@ package starling.extensions.macawslider
 			
 			//Flag _isInItemTransition
 			_isInItemTransition = true;
-			
+
 			//Determinar el valor de X
 			if(!_isVerticalSlider){
-				if(_previousSelectedItem == _currentSelectedItem){
-					_gotoX = 0;
-				}else if(_previousSelectedItem == 0 && _currentSelectedItem == _itemsLength -1){
-					_gotoX = _sliderWidth;
-				}else if (_previousSelectedItem == _itemsLength -1 && _currentSelectedItem == 0){
-					_gotoX = _sliderWidth * -1;
-				}else{
-					_gotoX = _sliderWidth * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+				if(_itemsLength != 2){
+					if(_previousSelectedItem == _currentSelectedItem){
+						_gotoX = 0;
+					}else if(_previousSelectedItem == 0 && _currentSelectedItem == _itemsLength -1){
+						_gotoX = _sliderWidth;
+					}else if (_previousSelectedItem == _itemsLength -1 && _currentSelectedItem == 0){
+						_gotoX = _sliderWidth * -1;
+					}else{
+						_gotoX = _sliderWidth * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+					}
+				}else{ //2 items is a special case
+					if(_previousSelectedItem == _currentSelectedItem){
+						_gotoX = 0;
+					}else if($itemIndex == 2){
+						_gotoX = _sliderWidth * -1;
+					}else if($itemIndex == -1){
+						_gotoX = _sliderWidth;
+					}else{
+						_gotoX = _sliderWidth * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+					}
 				}
 				
 				Starling.juggler.tween(_slidesContainer, _scrollSpeedTime, {
@@ -501,14 +519,26 @@ package starling.extensions.macawslider
 			}else{
 
 				//Determinar el valor de Y
-				if(_previousSelectedItem == _currentSelectedItem){
-					_gotoY = 0;
-				}else if(_previousSelectedItem == 0 && _currentSelectedItem == _itemsLength -1){
-					_gotoY = _sliderHeight;
-				}else if (_previousSelectedItem == _itemsLength -1 && _currentSelectedItem == 0){
-					_gotoY = _sliderHeight * -1;
-				}else{
-					_gotoY = _sliderHeight * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+				if(_itemsLength != 2){
+					if(_previousSelectedItem == _currentSelectedItem){
+						_gotoY = 0;
+					}else if(_previousSelectedItem == 0 && _currentSelectedItem == _itemsLength -1){
+						_gotoY = _sliderHeight;
+					}else if (_previousSelectedItem == _itemsLength -1 && _currentSelectedItem == 0){
+						_gotoY = _sliderHeight * -1;
+					}else{
+						_gotoY = _sliderHeight * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+					}
+				}else{ //2 items is a special case
+					if(_previousSelectedItem == _currentSelectedItem){
+						_gotoY = 0;
+					}else if($itemIndex == 2){
+						_gotoY = _sliderHeight * -1;
+					}else if($itemIndex == -1){
+						_gotoY = _sliderHeight;
+					}else{
+						_gotoY = _sliderHeight * (_previousSelectedItem > _currentSelectedItem ? 1 : -1);
+					}
 				}
 				
 				Starling.juggler.tween(_slidesContainer, _scrollSpeedTime, {
@@ -553,16 +583,14 @@ package starling.extensions.macawslider
 			//Verificar moviemientos en el baner
 			_touch = evt.getTouch(this, TouchPhase.MOVED);
 
-			if(_touch != null){
-				
-				//Add the Adjacent items to the slides container
-				if(_slidesContainer.numChildren <= 1){
-					this.addAdjacentItemsToSlidesContainer(_currentSelectedItem - 1, _currentSelectedItem + 1);
-				}
+			if(_touch != null && !_isInItemTransition){
 				
 				if(!_isVerticalSlider){
 					if(_lastTouchX >= 0){
 	
+						//Add the Adjacent items to the slides container
+						this.addAdjacentItemsToSlidesContainer(_currentSelectedItem - 1, _currentSelectedItem + 1);
+						
 						//Mover el slider junto con el dedo del usuario
 						_touchDelta = _touch.globalX - _lastTouchX;
 						_slidesContainer.x += _touchDelta;
@@ -600,6 +628,9 @@ package starling.extensions.macawslider
 				}else{
 					
 					if(_lastTouchY >= 0){
+						
+						//Add the Adjacent items to the slides container
+						this.addAdjacentItemsToSlidesContainer(_currentSelectedItem - 1, _currentSelectedItem + 1);
 						
 						//Mover el slider junto con el dedo del usuario
 						_touchDelta = _touch.globalY - _lastTouchY;
@@ -727,22 +758,54 @@ package starling.extensions.macawslider
 			//Check if this is a veritial slider
 			if(!_isVerticalSlider){
 				
-				//Add the previous item
-				_items[$prevItemIndex].x = _items[_currentSelectedItem].x - _sliderWidth;
-				_slidesContainer.addChild(_items[$prevItemIndex]);
-				
-				//Add the next item
-				_items[$nexItemIndex].x = _items[_currentSelectedItem].x + _sliderWidth;
-				_slidesContainer.addChild(_items[$nexItemIndex]);
+				if(_itemsLength != 2){
+					if(_slidesContainer.numChildren <= 1){
+						//Add the previous item
+						_items[$prevItemIndex].x = _items[_currentSelectedItem].x - _sliderWidth;
+						_slidesContainer.addChild(_items[$prevItemIndex]);
+						
+						//Add the next item
+						_items[$nexItemIndex].x = _items[_currentSelectedItem].x + _sliderWidth;
+						_slidesContainer.addChild(_items[$nexItemIndex]);
+					}					
+				}else{ //Where there's only 2 items, is a special case.
+					
+					if(_slidesContainer.x < 0){
+						//Add the next item
+						_items[$nexItemIndex].x = _items[_currentSelectedItem].x + _sliderWidth;
+						_slidesContainer.addChild(_items[$nexItemIndex]);
+						
+					}else{
+						//Add the previous item
+						_items[$nexItemIndex].x = _items[_currentSelectedItem].x - _sliderWidth;
+						_slidesContainer.addChild(_items[$nexItemIndex]);
+					}
+				}
 			}else{
 				
-				//Add the previous item
-				_items[$prevItemIndex].y = _items[_currentSelectedItem].y - _sliderHeight;
-				_slidesContainer.addChild(_items[$prevItemIndex]);
-				
-				//Add the next item
-				_items[$nexItemIndex].y = _items[_currentSelectedItem].y + _sliderHeight;
-				_slidesContainer.addChild(_items[$nexItemIndex]);
+				if(_itemsLength != 2){
+					if(_slidesContainer.numChildren <= 1){
+						//Add the previous item
+						_items[$prevItemIndex].y = _items[_currentSelectedItem].y - _sliderHeight;
+						_slidesContainer.addChild(_items[$prevItemIndex]);
+						
+						//Add the next item
+						_items[$nexItemIndex].y = _items[_currentSelectedItem].y + _sliderHeight;
+						_slidesContainer.addChild(_items[$nexItemIndex]);
+					}
+				}else{ //Where there's only 2 items, is a special case.
+					
+					if(_slidesContainer.y < 0){
+						//Add the next item
+						_items[$nexItemIndex].y = _items[_currentSelectedItem].y + _sliderHeight;
+						_slidesContainer.addChild(_items[$nexItemIndex]);
+						
+					}else{
+						//Add the previous item
+						_items[$prevItemIndex].y = _items[_currentSelectedItem].y - _sliderHeight;
+						_slidesContainer.addChild(_items[$prevItemIndex]);
+					}
+				}
 			}
 			
 		}

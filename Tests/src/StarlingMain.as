@@ -25,6 +25,7 @@ package
 			_macawSlider.addItemFromUrl('http://www.eyeopening.info/wp-content/uploads/2014/02/powerful-photos-13.jpg');
 			_macawSlider.isVerticalSlider = false;
 			_macawSlider.wrapSlider = true;
+			//_macawSlider.autoScrollTime = 2;
 			
 			this.addChild(_macawSlider);
 			_macawSlider.initialize();
