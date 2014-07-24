@@ -36,8 +36,8 @@ package starling.extensions.macawslider
 	 * @author Carlos Bernal <bernalcarvajal@gmail.com>
 	 */
 	[Event(name="SCROLL", type="starling.events.Event")]
-	[Event(name="SLIDER_ITEM_TAPPED", type="starling.extensions.macawslider.MacawSliderEvent"))]
-	[Event(name="SLIDER_ITEM_SELECTED", type="starling.extensions.macawslider.MacawSliderEvent"))]
+	[Event(name="ITEM_TAPPED", type="starling.extensions.macawslider.MacawSliderEvent"))]
+	[Event(name="ITEM_SELECTED", type="starling.extensions.macawslider.MacawSliderEvent"))]
 	public final class MacawSlider extends Sprite
 	{
 		/** Ancho del slider **/
@@ -73,13 +73,16 @@ package starling.extensions.macawslider
 		/** Delta que va sumando los moviemtos del usuario para determinar,
 		 *  si lo que el usuario quiere es ir al siguiente item del slider. **/
 		private var _sliderMovementDelta: Number = 0;
+		
+		/** Determines if the slider has been initialized. **/
+		private var _initialized: Boolean = false;
 
 		/** Tiempo de esperar para el pasar al siguiente item **/
 		private var _autoScrollTime: Number = 5;
 		/** Tiempo (en segundos) que demora la animacion del el slider en pasar de un item a otro **/
 		private var _scrollSpeedTime: Number = 0.5;
 		/** Determina si el slider se encuentra realizando una transición **/
-		private var _isInItemTransition: Boolean = false;;
+		private var _isInItemTransition: Boolean = false;
 		
 		/** Timer que controla el scroll automatico del slider **/
 		private var _autoScrollTimer: Timer;
@@ -347,6 +350,9 @@ package starling.extensions.macawslider
 		 * Inicializa el slider. Lo que implica que se inicia el auto scroll, se agregan los listeners, y se cargan las images si venian por url.
 		 */
 		public function initialize(): void{
+			
+			//Marcar que se ha inicalizado el slider
+			_initialized = true;
 			
 			//Crear el timer para el scroll automatico
 			if(_autoScrollTime > 0){
@@ -1178,6 +1184,12 @@ package starling.extensions.macawslider
 		public function get previousSelectedItem():int
 		{
 			return _previousSelectedItem;
+		}
+		
+		/** Determines if the slider has been initialized. **/
+		public function get initialized():Boolean
+		{
+			return _initialized;
 		}
 	}
 }
